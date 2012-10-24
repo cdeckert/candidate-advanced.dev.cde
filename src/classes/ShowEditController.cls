@@ -1,24 +1,12 @@
-public with sharing class ShowEditController {
+/**
+* @author Christian Deckert
+* @date 24/12/2012
+* @description Class controls visualforce page. Takes care of fiters and uses pagingTable to generate a result table. 
+*/
+public with sharing class ShowEditController implements Observer{
 	
-	public Show__c currentRecord {get; set;}
-	public List<PerformanceContainer>result
-	{
-		get
-		{
-			result = new List<PerformanceContainer>();
-			List<Artist__c> aritsts = (List<Artist__c>)setCon.getRecords();
-			Map<Id, Performance__c>performancesFromDb = getPerformancesFromDB(aritsts);
-
-			for(Artist__c a : aritsts)
-			{
-				result.add(new PerformanceContainer(a, currentRecord.id,performancesFromDb));
-			}
-			return result;
-		}		
-		set;
-	}
+	
 	public String filterType {get; set;}
-
 	public List<SelectOption> filterSelectOptions
 	{
 		get
@@ -34,72 +22,130 @@ public with sharing class ShowEditController {
 		set;
 	}
 
-	public ApexPages.StandardSetController setCon
+	public PagingTable table
 	{
 		get
 		{
-			if(setCon == null)
+			if(table == null)
 			{
-				String queryString = 'SELECT ID, Type__c, Expected_Draw__c, List_Cost__c FROM Artist__c';
-				if(filterType <> null)
-				{
-					queryString += ' WHERE Type__c = \''+filterType+'\'';
-				}
-				queryString += ' order by Name';
-				setCon = new ApexPages.StandardSetController(Database.getQueryLocator(queryString));
-				setCon.setPageSize(5);
-				setCon.setPageNumber(1);
+				table = new PagingTable();
 			}
-			return setCon;
-		}
+			
+			return table;
+		} 
 		set;
 	}
 
-
-
-	public boolean hasNext
+	public List<PerformanceResultContainer>resultContainer
 	{
 		get
 		{
-			return setCon.getHasNext();
+			PerformanceResultContainer.showId = stdcontroller.getRecord().id;
+			return resultContainer;
 		}
-		set;
-	}
-	public boolean hasPrev
+	 	set;
+	 }
+
+
+
+
+	private String getQueryStringForTable()
 	{
-		get
+		String queryString = 'SELECT ID, Type__c, Expected_Draw__c, List_Cost__c FROM Artist__c';
+		if(filterType <> null)
 		{
-			return setCon.getHasPrevious();
+			queryString += ' WHERE Type__c includes (\''+filterType+'\')';
+			//System.assert(false, queryString);
 		}
-		set;
+		queryString += ' order by Name';
+		return queryString;
 	}
 
-	public void prev()
-	{
-		setCon.previous();
-	}
-	public void next()
-	{
-		setCon.next();
-	}
+	
 
-    public ShowEditController(ApexPages.StandardController controller)
+	private ApexPages.StandardController stdcontroller;
+    public ShowEditController(ApexPages.StandardController stdcontroller)
     {
-    	currentRecord = (Show__c)controller.getRecord();
+    	this.stdcontroller = stdcontroller;
+    	this.filter();
+    	this.table.pageFlipObservers.add(this);
+
     }
 
     public void filter()
     {
-    	setCon = null;
+    	this.table.setCon = new ApexPages.StandardSetController(Database.getQueryLocator(getQueryStringForTable()));
+    	this.buildResultContainer();
+     }
+
+    private void buildResultContainer()
+    {
+    	resultContainer = new List<PerformanceResultContainer>();
+    	Map<Id, PerformanceResultContainer> resultContainerMap = new Map<Id, PerformanceResultContainer>();
+    	for(Artist__c a : (List<Artist__c>) this.table.getRecords())
+    	{
+    		resultContainerMap.put(a.id, new PerformanceResultContainer(a));
+    		resultContainer.add(resultContainerMap.get(a.id));
+    	}
+    	if(!resultContainerMap.isEmpty())
+    	{
+    		for(Performance__c p : [SELECT ID, Show__c, Artist__c, Booking_Cost__c FROM Performance__c WHERE Artist__c IN :resultContainerMap.keySet() AND Show__c = :stdcontroller.getRecord().id])
+    		{
+    			resultContainerMap.get(p.Artist__c).performance = p;
+    		}
+    	}
     }
 
     public void clearFilter()
     {
-    	filterType = null;
-    	filter();
+    	this.filterType = null;
+    	this.filter();
+    }
+
+    public PageReference save()
+    {
+
+    	quickSave();
+    	return stdcontroller.view();
+    }
+
+    public void quickSave()
+    {
+    	stdcontroller.save();
+    	List<Performance__c>upsertPerformance = new List<Performance__c>();
+    	List<Performance__c>deletePerformance = new List<Performance__c>();
+    	for(PerformanceResultContainer r : resultContainer)
+    	{
+    		if(r.checked)
+    		{
+    			upsertPerformance.add(r.performance);
+    		}
+    		else if(r.performance.id <> null)
+    		{
+    			deletePerformance.add(r.performance);
+    		}
+    	}
+
+    	if(!upsertPerformance.isEmpty())
+    	{
+    		upsert upsertPerformance;
+    	}
+
+    	if(!deletePerformance.isEmpty())
+    	{
+    		delete deletePerformance;
+    	}
+    	buildResultContainer();
+    	stdcontroller.reset();
     }
 
 
+    public void notify()
+    {
+    	buildResultContainer();
+    }
+
+    /*
  
     private Map<Id, Performance__c>getPerformancesFromDB(List<Artist__c>artists)
     {
@@ -135,5 +181,5 @@ public with sharing class ShowEditController {
     		this.showId = showId;
     		
     	}
-    }
+    }*/
 }

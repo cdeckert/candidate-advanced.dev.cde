@@ -1,5 +1,5 @@
 <apex:page tabStyle="Show__c" standardController="Show__c" extensions="ShowEditController">
-    <apex:sectionHeader title="{!$ObjectType.Show__c.Label}" subtitle="{!IF(currentRecord.name== null, 'New Show', currentRecord.name)}"/>
+    <apex:sectionHeader title="{!$ObjectType.Show__c.Label}" subtitle="{!IF(Show__c.name== null, 'New Show', Show__c.name)}"/>
     <apex:form >
         <apex:pageblock title="Show Builder" mode="edit">
             <apex:pageBlockSection title="Show Details" collapsible="false" columns="1">
@@ -21,41 +21,41 @@
                         <apex:commandButton value="Clear Filter" action="{!clearFilter}"/>
                     </apex:panelGroup>
                 </apex:facet>
-                <apex:pageBlockTable var="r" value="{!result}">
+                <apex:pageBlockTable var="r" value="{!resultContainer}">
                     <apex:column >
                         <apex:facet name="header">Select</apex:facet>
                         <apex:inputCheckbox value="{!r.checked}"/>
                     </apex:column>
                     <apex:column >
                         <apex:facet name="header">{!$ObjectType.Artist__c.Fields.Name.Label}</apex:facet>
-                        <apex:outputField value="{!r.record.Artist__c}"/>
+                        <apex:outputField value="{!r.performance.Artist__c}"/>
                     </apex:column>
                     <apex:column >
                         <apex:facet name="header">{!$ObjectType.Artist__c.Fields.Type__c.Label}</apex:facet>
-                        <apex:outputField value="{!r.record.Artist__r.Type__c}"/>
+                        <apex:outputField value="{!r.artist.Type__c}"/>
                     </apex:column>
                     <apex:column >
                         <apex:facet name="header">{!$ObjectType.Artist__c.Fields.Expected_Draw__c.Label}</apex:facet>
-                        <apex:outputField value="{!r.record.Artist__r.Expected_Draw__c}"/>
+                        <apex:outputField value="{!r.artist.Expected_Draw__c}"/>
                     </apex:column>
                     <apex:column >
                         <apex:facet name="header">{!$ObjectType.Artist__c.Fields.List_Cost__c.Label}</apex:facet>
-                        <apex:outputField value="{!r.record.Artist__r.List_Cost__c}"/>
+                        <apex:outputField value="{!r.artist.List_Cost__c}"/>
                     </apex:column>
                     <apex:column >
                         <apex:facet name="header">{!$ObjectType.Performance__c.Fields.Booking_Cost__c.Label}</apex:facet>
-                        <apex:inputField value="{!r.record.Booking_Cost__c}"/>
+                        <apex:inputField value="{!r.performance.Booking_Cost__c}"/>
                     </apex:column>
                 </apex:pageBlockTable>
                 <apex:panelGrid columns="2" styleClass="pbButtonb" style="margin-left:30%;">
-                        <apex:commandLink value="< Previous Page" action="{!prev}" rendered="{!hasPrev}"/>
-                        <apex:commandLink value="Next Page >" action="{!next}" rendered="{!hasNext}"/>
+                        <apex:commandLink value="< Previous Page" action="{!table.prev}" rendered="{!table.hasPrev}"/>
+                        <apex:commandLink value="Next Page >" action="{!table.next}" rendered="{!table.hasNext}"/>
                 </apex:panelGrid>
             </apex:pageBlockSection>
             <apex:pageBlockButtons >
-                <apex:commandButton value="Save"/>
-                <apex:commandButton value="Quick Save"/>
-                <apex:commandButton value="Cancel"/>
+                <apex:commandButton value="Save" action="{!save}"/>
+                <apex:commandButton value="Quick Save" action="{!quickSave}"/>
+                <apex:commandButton value="Cancel" action="{!cancel}"/>
             </apex:pageBlockButtons>
         </apex:pageblock>
     </apex:form>
