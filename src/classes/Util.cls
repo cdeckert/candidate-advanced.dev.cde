@@ -66,4 +66,16 @@ public class Util
 		}
 		return stringSet;
 	}
+
+	public static List<SelectOption> getSelectOptionsFromSObjectField(sObject obj, String field )
+	{	
+		List<SelectOption>selectOptions = new List<SelectOption>();
+		List<Schema.PicklistEntry> values = getFieldMap(obj).get(field).getDescribe().getPickListValues();
+		
+		for(Schema.PicklistEntry a : values)
+		{
+			selectOptions.add(new SelectOption(a.getLabel(), a.getValue())); 
+		}
+		return selectOptions;
+	}
 }

@@ -14,9 +14,11 @@
                 <apex:facet name="header">
                     <apex:panelGroup >
                         <apex:outputLabel >Artist Type Filter:</apex:outputLabel> 
-                        <apex:selectList ></apex:selectList>
-                        <apex:commandButton value="Filter"/>
-                        <apex:commandButton value="Clear Filter"/>
+                        <apex:selectList size="1" value="{!filterType}">
+                            <apex:selectOptions value="{!filterSelectOptions}" />
+                        </apex:selectList>
+                        <apex:commandButton value="Filter" action="{!filter}"/>
+                        <apex:commandButton value="Clear Filter" action="{!clearFilter}"/>
                     </apex:panelGroup>
                 </apex:facet>
                 <apex:pageBlockTable var="r" value="{!result}">

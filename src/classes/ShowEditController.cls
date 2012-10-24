@@ -19,6 +19,21 @@ public with sharing class ShowEditController {
 	}
 	public String filterType {get; set;}
 
+	public List<SelectOption> filterSelectOptions
+	{
+		get
+		{
+			if(filterSelectOptions == null)
+			{
+				filterSelectOptions = new List<SelectOption>();
+				filterSelectOptions.add(new SelectOption('', '—Select One—'));
+				filterSelectOptions.addAll(Util.getSelectOptionsFromSObjectField(new Artist__c(), 'Type__c'));
+			}
+			return filterSelectOptions;
+		}
+		set;
+	}
+
 	public ApexPages.StandardSetController setCon
 	{
 		get
@@ -76,6 +91,12 @@ public with sharing class ShowEditController {
     public void filter()
     {
     	setCon = null;
+    }
+
+    public void clearFilter()
+    {
+    	filterType = null;
+    	filter();
     }
 
 
